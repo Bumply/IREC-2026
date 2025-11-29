@@ -42,14 +42,22 @@ avionics/
 
 ---
 
-## 🎯 Sensor Redundancy
+## 🎯 Avionics System
 
+### COTS Components
+| Component | Type | Purpose |
+|-----------|------|---------|
+| RRC3 Sport | Altimeter | Primary dual-deployment |
+| EasyMini | Altimeter | Backup dual-deployment |
+| Featherweight GPS | Tracker | Recovery tracking (915 MHz) |
+
+### SRAD Flight Computer Sensors
 | Type | Primary | Backup | Purpose |
 |------|---------|--------|---------|
 | **IMU** | MPU9250 | BNO055 | Orientation, acceleration |
 | **Barometer** | BMP380 | MS5611 | Altitude, apogee detection |
 | **GPS** | NEO-7M | — | Position tracking |
-| **Radio** | E32-433T30D | — | Live telemetry |
+| **Radio** | E32-433T30D | — | Live telemetry (433 MHz) |
 
 ---
 
