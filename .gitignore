@@ -1,0 +1,71 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Build outputs
+build/
+dist/
+*.exe
+*.dll
+*.so
+
+# Simulation files (large)
+*.sldprt
+*.sldasm
+*.SLDPRT
+*.SLDASM
+*.step
+*.STEP
+*.iges
+*.IGES
+*.stl
+*.STL
+
+# Keep OpenRocket files
+!*.ork
+
+# ANSYS files (can be large)
+*.wbpj
+*.mechdb
+*.rst
+*.db
+
+# Compiled firmware
+*.hex
+*.bin
+*.elf
+*.map
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+~$*
+
+# Archives (upload separately)
+*.zip
+*.rar
+*.7z
+
+# Large media
+*.mp4
+*.mov
+*.avi
+
+# Keep important docs
+!*.pdf
+!*.docx
+!*.xlsx
