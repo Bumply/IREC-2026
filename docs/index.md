@@ -20,6 +20,7 @@ nav_order: 1
 | **RAM** | 256 KB SRAM |
 | **Sensors** | Dual IMU, Dual Barometer, GPS |
 | **Telemetry** | 433 MHz LoRa, 10 Hz update |
+| **Video Payload** | OpenIPC Digital, 720p30 Live Stream |
 | **Target Altitude** | 10,000 ft AGL |
 
 ---
@@ -34,6 +35,8 @@ nav_order: 1
 | [Hardware Drivers](drivers) | Sensor and peripheral APIs |
 | [Telemetry Protocol](telemetry) | Packet format, ground station communication |
 | [Data Logging](data-logging) | Flash memory layout, record formats |
+| [Power System](power-system) | Battery, regulation, pyro circuits |
+| [Video Payload](video-payload) | OpenIPC digital livestream system |
 
 ---
 
@@ -62,6 +65,11 @@ flowchart TB
         PYRO["Pyrotechnics"]
     end
 
+    subgraph VIDEO["VIDEO PAYLOAD"]
+        CAM["IMX307<br/>Camera"]
+        VTX["OpenIPC<br/>Transmitter"]
+    end
+
     SENS --> FUSION
     FUSION --> FSM
     FUSION --> LOG
@@ -69,6 +77,7 @@ flowchart TB
     FSM --> PYRO
     LOG --> FLASH
     TELEM --> RADIO
+    CAM --> VTX
 ```
 
 ---

@@ -52,6 +52,8 @@ The downside is that we must carefully budget our time. If any task takes too lo
 | **MS5611** | Different manufacturer than BMP380. If there's a batch defect in Bosch parts, we're not affected. |
 | **E32-433T30D** | 1W output, 8km range. Simple UART interface. No complex packet handling needed. |
 | **W25Q40** | Cheap, reliable, fast enough (80MHz SPI). 512KB is enough for several flights. |
+| **OpenIPC (SSC338Q)** | Open-source digital video. H.265 encoding, low latency, native streaming support. |
+| **IMX307 Camera** | Starlight sensor with excellent low-light. Well-supported by OpenIPC firmware. |
 
 ---
 
@@ -86,6 +88,12 @@ flowchart TB
         FLASH[W25Q Flash<br/>SPI1]
     end
 
+    subgraph Video["Video Payload (Independent)"]
+        CAM[IMX307 Camera<br/>MIPI CSI]
+        OPENIPC[OpenIPC SoC<br/>Sigmastar SSC338Q]
+        VTX[5.8GHz VTX<br/>25-600mW]
+    end
+
     subgraph Deploy["Deployment"]
         DRG[Drogue]
         MAIN[Main]
@@ -108,6 +116,9 @@ flowchart TB
     TLM --> LORA
     LOG --> FLASH
     GPS --> TLM
+
+    CAM --> OPENIPC
+    OPENIPC --> VTX
 ```
 
 ### Data Flow Explained
@@ -135,6 +146,9 @@ flowchart TB
 | Radio | E32-433T30D | UART3 @ 9600 | 433MHz LoRa |
 | Flash | W25Q40 | SPI1 @ 18MHz | 512KB |
 | Pyro | IRFU120N MOSFET | GPIO | PE0-PE3 |
+| **Video Camera** | IMX307 | MIPI CSI-2 | 1080p sensor |
+| **Video SoC** | SSC338Q (OpenIPC) | - | H.265 encoder |
+| **Video TX** | 5.8GHz Digital | - | 720p30, 25-600mW |
 
 ### Why These Interfaces?
 

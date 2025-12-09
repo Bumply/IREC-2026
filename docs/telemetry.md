@@ -87,6 +87,7 @@ flowchart LR
 | FULL | 0x02 | TX→GND | 1Hz | 48B | Complete sensor dump |
 | GPS | 0x03 | TX→GND | 1Hz | 24B | GPS coordinates |
 | EVENT | 0x04 | TX→GND | On event | 8B | State changes, errors |
+| VIDEO_OSD | 0x05 | FC→Video | 10Hz | 16B | OSD overlay data |
 | ACK | 0x10 | GND→FC | Response | 4B | Command acknowledgment |
 | CMD | 0x20 | GND→FC | On demand | 4B | Ground commands |
 
@@ -266,6 +267,97 @@ Instead of constantly checking "did state change?", the ground station just list
 - Reduces ground station complexity
 - Provides exact timestamps for post-flight analysis
 - Captures data at the moment of the event (not delayed by next status packet)
+
+---
+
+## Video OSD Packet (0x05)
+
+Sent to the OpenIPC video module for on-screen display overlay on the livestream.
+
+### Structure
+
+```c
+typedef struct __attribute__((packed)) {
+    uint32_t timestamp;     // 4 bytes: ms since boot (for OSD time display)
+    int16_t  altitude;      // 2 bytes: meters AGL
+    int16_t  velocity;      // 2 bytes: m/s * 10
+    int16_t  max_alt;       // 2 bytes: Peak altitude
+    uint8_t  state;         // 1 byte:  Flight state enum
+    uint8_t  battery;       // 1 byte:  Volts * 10
+    uint8_t  gps_sats;      // 1 byte:  Satellite count
+    uint8_t  flags;         // 1 byte:  Status flags
+    uint16_t reserved;      // 2 bytes: Future use
+} TLM_VideoOSD_Payload_t;   // Total: 16 bytes
+```
+
+### Serial Protocol to OpenIPC
+
+The STM32 sends OSD data via UART4 to the OpenIPC module using a simple ASCII protocol:
+
+```c
+// Format: $OSD,timestamp,altitude,velocity,maxalt,state,battery,sats,flags*checksum\r\n
+void SendVideoOSD(void) {
+    TLM_VideoOSD_Payload_t osd;
+    osd.timestamp = HAL_GetTick();
+    osd.altitude = (int16_t)kalman_state.altitude;
+    osd.velocity = (int16_t)(kalman_state.velocity * 10);
+    osd.max_alt = (int16_t)max_altitude;
+    osd.state = current_state;
+    osd.battery = (uint8_t)(battery_voltage * 10);
+    osd.gps_sats = gps_satellites;
+    osd.flags = status_flags;
+    
+    char buffer[80];
+    uint8_t checksum = 0;
+    int len = snprintf(buffer, sizeof(buffer),
+        "$OSD,%lu,%d,%d,%d,%d,%d,%d,%d*",
+        osd.timestamp, osd.altitude, osd.velocity,
+        osd.max_alt, osd.state, osd.battery,
+        osd.gps_sats, osd.flags);
+    
+    // Calculate XOR checksum (like NMEA)
+    for (int i = 1; i < len - 1; i++) {  // Skip $ and *
+        checksum ^= buffer[i];
+    }
+    
+    snprintf(buffer + len, sizeof(buffer) - len, "%02X\r\n", checksum);
+    HAL_UART_Transmit(&huart4, (uint8_t*)buffer, strlen(buffer), 20);
+}
+```
+
+### OpenIPC OSD Configuration
+
+On the OpenIPC module, add a custom OSD parser in `/etc/majestic.yaml`:
+
+```yaml
+osd:
+  enabled: true
+  font: "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf"
+  size: 24
+  color: 0xFFFFFF
+  
+  # Custom OSD template using MSP variables
+  template: |
+    IREC 2026 | STATE: %state% | T+%time%
+    
+    ALT: %alt%m | VEL: %vel%m/s | MAX: %max%m | BAT: %bat%V
+```
+
+### OSD Display Layout
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│  IREC 2026 | STATE: COAST | T+00:12.4             SATS: 8 🛰️  │
+│                                                                │
+│                                                                │
+│                                                                │
+│                      [ VIDEO FEED ]                            │
+│                                                                │
+│                                                                │
+│                                                                │
+│  ALT: 2,847m ▲ | VEL: 124m/s ▼ | MAX: 3,048m | BAT: 15.1V    │
+└────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
