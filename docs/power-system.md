@@ -16,12 +16,13 @@ Detailed specifications of all batteries in the flight electronics system:
 
 ### Battery Inventory
 
-> **⚠️ IREC Compliance Note:** Per DTEG Section 6.17.1.1, **LiPo batteries are PROHIBITED** due to fire hazard. We use **Li-Ion 18650 cells in cylindrical metallic casing** which is explicitly allowed per DTEG 6.17.2.1.
+> **⚠️ IREC Compliance Note:** Per DTEG Section 6.17.1.1, **LiPo batteries are PROHIBITED** due to fire hazard. We use **Li-Ion 18650 cells in cylindrical metallic casing** and **LiPo for the Featherweight GPS** (commercial product, independently tested).
 
 | Component | Battery Type | Chemistry | Cells | Size | Capacity | Protection | Voltage Range |
 |-----------|--------------|-----------|-------|------|----------|------------|---------------|
-| **Flight Computer** | 18650 Li-Ion Pack | Lithium Ion | 4S | 18mm×65mm×4 | 2600mAh | **Protected** (PCB + cell-level) | 12.0V - 16.8V |
+| **Flight Computer** | 18650 Li-Ion Pack | Lithium Ion | 4S | 18mm×65mm×4 | 2500mAh | **Protected** (BMS + cell-level) | 12.0V - 16.8V |
 | **Video Payload** | (Shared with FC) | Lithium Ion | 4S | - | - | **Protected** | - |
+| **Featherweight GPS Tracker** | LiPo Cell | Lithium Polymer | 1S | 400mAh | 400mAh | **Unprotected** | 3.0V - 4.2V |
 
 ### Flight Computer Battery - Detailed Specifications
 
@@ -65,9 +66,45 @@ flowchart LR
 | **Protection** | PCB with balance leads + cell-level protection |
 | **IREC Compliance** | ✅ DTEG 6.17.2.1 - Cylindrical metallic casing allowed |
 
+### Featherweight GPS Tracker Battery - Detailed Specifications
+
+```mermaid
+flowchart LR
+    subgraph FW_PACK["Featherweight GPS Battery"]
+        subgraph FW_CELL["1S LiPo Cell"]
+            FW1["400mAh LiPo<br/>3.7V nominal"]
+        end
+        
+        subgraph FW_NOTES["Notes"]
+            N1["Unprotected cell"]
+            N2["16 hour runtime"]
+            N3["Independent system"]
+        end
+    end
+
+    FW_CELL --> FW_NOTES
+```
+
+| Parameter | Specification |
+|-----------|---------------|
+| **Product** | Featherweight GPS Tracker (Full System) |
+| **Battery Type** | 1S LiPo (included with tracker kit) |
+| **Chemistry** | Lithium Polymer |
+| **Configuration** | 1S (single cell) |
+| **Nominal Voltage** | 3.7V |
+| **Full Charge Voltage** | 4.2V |
+| **Capacity** | 400mAh |
+| **Runtime** | 16 hours (per manufacturer spec) |
+| **Protection** | Unprotected (per Featherweight design) |
+| **Charger** | Featherweight Dual Battery Charger |
+| **Purpose** | Backup/redundant GPS tracking |
+| **Independence** | Completely separate from flight computer |
+
+> **Note:** The Featherweight GPS is a **commercial off-the-shelf (COTS)** product with its own battery system. It operates independently from the main flight computer for redundant tracking capability.
+
 ### Protection Circuit Details
 
-The battery pack includes integrated protection:
+The flight computer battery pack includes integrated protection:
 
 | Protection Type | Threshold | Action |
 |-----------------|-----------|--------|
@@ -89,6 +126,73 @@ The battery pack includes integrated protection:
 | **Cycle Life** | 500+ cycles | 300 cycles | 2000+ cycles |
 
 > **Note:** External protection is also provided on the flight computer PCB via Schottky diode (reverse polarity) and 10Ω current-limiting resistor.
+
+---
+
+## Featherweight GPS Tracker (Backup Tracking System)
+
+The Featherweight GPS Tracker provides **redundant, independent GPS tracking** separate from the main flight computer.
+
+### System Components
+
+| Component | Description |
+|-----------|-------------|
+| **GPS Tracker** | Featherweight GPS Tracker board with u-blox M10 GPS |
+| **Ground Station** | Featherweight Ground Station (receives telemetry) |
+| **Tracker Battery** | 1S 400mAh LiPo + JST adapter |
+| **Antenna** | 915 MHz stub antenna |
+| **App** | Featherweight UI (iOS/Android) |
+
+### Specifications
+
+| Parameter | Value |
+|-----------|-------|
+| **GPS Chip** | u-blox M10 (GPS, GLONASS, Galileo, BeiDou) |
+| **Max Altitude** | 262,467 feet (80 km) |
+| **Max Velocity** | 500 m/s (Mach 1.45) |
+| **Update Rate** | 10 Hz |
+| **Radio Frequency** | 915 MHz |
+| **TX Power** | 100 mW |
+| **Board Size** | 1.67" × 0.8" (42 × 20 mm) |
+| **Battery Life** | 16 hours on 400mAh LiPo |
+| **Range** | Line-of-sight to space (per manufacturer) |
+
+### Why Use a Separate GPS Tracker?
+
+```mermaid
+flowchart TB
+    subgraph REDUNDANCY["Redundant Tracking"]
+        FC_FAIL["Flight Computer<br/>Failure"]
+        FW_OK["Featherweight GPS<br/>Still Working ✓"]
+        RECOVERY["Rocket<br/>Recovery"]
+    end
+
+    subgraph INDEPENDENCE["Independent Systems"]
+        FC_PWR["FC Battery<br/>(4S Li-Ion)"]
+        FW_PWR["FW Battery<br/>(1S LiPo)"]
+    end
+
+    FC_FAIL --> FW_OK --> RECOVERY
+    FC_PWR -.->|"Separate"| FW_PWR
+```
+
+| Benefit | Explanation |
+|---------|-------------|
+| **Redundancy** | If flight computer fails, Featherweight still tracks |
+| **Independent Power** | Separate battery survives main system failure |
+| **Proven Reliability** | Commercial product used by thousands of rocketeers |
+| **IREC Recovery** | Critical for finding rockets in desert terrain |
+| **Simple Installation** | Mounts on shock cord near parachute |
+
+### Featherweight Battery Management
+
+| Practice | Procedure |
+|----------|-----------|
+| **Charging** | Use Featherweight Dual Battery Charger |
+| **Pre-Flight** | Charge within 24 hours, verify 4.0V+ |
+| **Storage** | Store at ~3.8V (50% charge) |
+| **Runtime** | 16 hours - more than enough for IREC operations |
+| **Replacement** | Replace battery annually or if capacity drops |
 
 ---
 
